@@ -85,7 +85,6 @@ app.post('/enroll', async (req, res) => {
     const email = pick('email', 'Email').toLowerCase();
     if (!email || !/@/.test(email)) return res.status(400).json({ error: 'email is required' });
 
-    const name = `${pick('firstName', 'first_name')} ${pick('lastName', 'last_name')}`.trim();
     // Send window follows the business's local time, worked out from its city.
     const city = pick('city', 'City', 'businessCity', 'business_city');
     const where = resolveTimezone({
@@ -97,7 +96,6 @@ app.post('/enroll', async (req, res) => {
     const result = await db.enroll({
       contactId  : pick('contactId', 'contact_id', 'id', 'Contact Id'),
       email,
-      name,
       city,
       tz         : where.tz,
       companyName: cleanBusinessName(pick('companyName', 'businessName', 'company_name', 'Company Name')),
