@@ -41,10 +41,6 @@ const AUTO_REPLY_TAGS = { closed: 'autoreply_closed', wrongemail: 'autoreply_wro
 const UNSUB_RE = /\b(unsubscribe|opt[ -]?out|remove me|take me off|stop (emailing|contacting|sending)|do not (email|contact)|don'?t (email|contact))\b/i;
 
 // ─── "Please email X instead" ────────────────────────────────────────────────
-const GENERIC_INBOXES = new Set(['info', 'office', 'contact', 'admin', 'support', 'sales', 'hello', 'hi', 'team',
-  'service', 'services', 'reception', 'frontdesk', 'front', 'mail', 'email', 'help', 'billing', 'accounts',
-  'inquiries', 'enquiries', 'inquiry', 'booking', 'bookings', 'dispatch', 'customerservice', 'care', 'main']);
-
 async function findRedirectAddress(msg, enrollment) {
   const text = `${msg.subject || ''}\n${msg.body || msg.snippet || ''}`;
   const found = (text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || []).map(e => e.toLowerCase());
@@ -57,14 +53,6 @@ async function findRedirectAddress(msg, enrollment) {
     !ourDomains.has(e.split('@')[1]) &&
     !/^(no-?reply|do-?not-?reply|mailer-daemon|postmaster)/.test(e)
   ) || null;
-}
-
-function nameFromAddress(email, companyName) {
-  const local = email.split('@')[0].toLowerCase();
-  const first = (local.match(/^([a-z]{2,15})(?:[._-][a-z]+)?$/) || [])[1];
-  if (!first || GENERIC_INBOXES.has(first)) return null;
-  if (String(companyName || '').toLowerCase().split(/[^a-z]+/).includes(first)) return null;
-  return first.charAt(0).toUpperCase() + first.slice(1);
 }
 
 // Switches the lead to the new address and restarts the sequence from email 1
@@ -80,20 +68,17 @@ async function redirectToNewAddress(enrollment, msg) {
     return false;
   }
 
-  const personName = nameFromAddress(newEmail, enrollment.company_name);
   await pool.query(
     `UPDATE enrollments SET
-       prospect_email = $2, prospect_name = $3,
+       prospect_email = $2,
        step = 0, status = 'active', next_send_at = NOW(),
        thread_id = NULL, thread_ids = '{}', last_message_id = NULL, mailbox = NULL, last_sent_at = NULL,
        conversation_history = '[]'::jsonb, conv_status = NULL, conv_followup_at = NULL, calendar_sent_at = NULL, first_subject = NULL
      WHERE id = $1`,
-    [enrollment.id, newEmail, personName || enrollment.company_name || '']
+    [enrollment.id, newEmail]
   );
 
-  const update = { email: newEmail };
-  if (personName) update.firstName = personName;
-  await crm.updateContact(enrollment.contact_id, update);
+  await crm.updateContact(enrollment.contact_id, { email: newEmail });
   await crm.addNote(enrollment.contact_id,
     `Call Campaign: auto-reply said ${enrollment.prospect_email} is no longer used. Switched to ${newEmail} and restarted the sequence.`);
   await crm.moveStage(enrollment, 'inSequence');
@@ -284,5 +269,5 @@ async function detectRepliesAndBounces() {
 module.exports = {
   detectRepliesAndBounces, detectorStatus,
   // exported for tests
-  autoReplyKind, nameFromAddress, findRedirectAddress, CLOSED_STATUSES, UNSUB_RE,
+  autoReplyKind, findRedirectAddress, CLOSED_STATUSES, UNSUB_RE,
 };
