@@ -43,9 +43,11 @@ function cleanReplyFormatting(text) {
   return paragraphs.join('\n\n');
 }
 
+// Last line of defence: no reply ever goes out opening with "Hi John," / "John," / "Hey there!".
 function stripAiGreeting(text) {
   return String(text || '')
-    .replace(/^(?:Hi|Hello|Hey|Dear|Good (?:morning|afternoon|evening))\b(?:[ \t]+[^,\n!]+)?[,!]?\s*/i, '')
+    .replace(/^(?:Hi|Hello|Hey|Dear|Greetings|Good (?:morning|afternoon|evening))\b(?:[ \t]+[^,\n!.]+)?[,!.]?\s*/i, '')
+    .replace(/^[A-Z][a-z'-]+(?:\s+[A-Z][a-z'-]+)?\s*,[ \t]*\n+/, '')
     .trim()
     .replace(/^./, c => c.toUpperCase());
 }
@@ -284,7 +286,6 @@ async function handleConversationalReply(enrollment, msg) {
 
     const result = await runPipeline({
       persona,
-      prospectName: enrollment.prospect_name,
       companyName : enrollment.company_name,
       city        : enrollment.prospect_city,
       calendarLink: CALENDAR_LINK,
