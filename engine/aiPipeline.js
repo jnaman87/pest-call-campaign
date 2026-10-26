@@ -159,7 +159,7 @@ function drafterSystem(ctx, allowCalendar) {
 GOAL: ${GOAL}
 
 HOW TO WRITE:
-- Start directly with the message. Never open with a greeting, "Hi", "Hey", "Hello", or their name.
+- Start directly with the body of the message. Never open with a greeting ("Hi", "Hey", "Hello", "Dear", "Good morning"), a name, or a line like "John,". Never use the prospect's name anywhere.
 - Answer exactly what they just said first. Reply to them, not to a script.
 - If they agreed to a call: thank them in a few words and give the booking link. Nothing else.
 - If they asked a question: answer it in one or two sentences from the FACTS, then invite them to book the call.
@@ -203,8 +203,11 @@ function guardIssues(draft, ctx, allowCalendar, mustIncludeCalendar = false) {
 
   if (!text) issues.push('The reply is empty.');
   if (/^(hi|hey|hello|dear|good (morning|afternoon|evening))\b/i.test(text)) issues.push('Starts with a greeting. Start directly with the message.');
-  const firstName = (ctx.prospectName || '').trim().split(/\s+/)[0];
-  if (firstName && firstName.length > 1 && lower.startsWith(firstName.toLowerCase())) issues.push("Starts with the prospect's name. Start directly with the message.");
+  // A first line that is only a name or a salutation, e.g. "John," / "Thanks John," / "Team,"
+  const firstLine = text.split('\n')[0].trim();
+  if (/^(thanks|thank you)?\s*[A-Z][a-z'-]+(\s+[A-Z][a-z'-]+)?\s*[,!]$/.test(firstLine) || /^(team|all|folks|there|sir|madam)\b[,!]/i.test(firstLine)) {
+    issues.push('Opens with a name or salutation. Start directly with the message.');
+  }
   for (const phrase of BANNED_PHRASES) if (lower.includes(phrase)) issues.push(`Uses the banned phrase "${phrase}".`);
   if (/[—–]/.test(text)) issues.push('Contains an em or en dash.');
   const words = text.split(/\s+/).filter(Boolean).length;
