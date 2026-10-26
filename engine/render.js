@@ -73,10 +73,8 @@ function trackOf(enrollment) {
 
 // ─── Merge fields ────────────────────────────────────────────────────────────
 function fields(enrollment, persona) {
-  const first = clean(String(enrollment.prospect_name || '').split(/\s+/)[0]);
   const t = trackOf(enrollment) || {};
   return {
-    first_name   : first || '',
     company      : clean(enrollment.company_name) || 'your business',
     city         : clean(enrollment.prospect_city) || 'your area',
     hook         : clean(enrollment.personalisation_hook),
