@@ -232,7 +232,7 @@ async function listInboxIds(mailbox, { days = 3, maxIds = 500 } = {}) {
   const out = [];
   let pageToken = '';
   do {
-    const q = encodeURIComponent(`in:inbox newer_than:${days}d -from:me`);
+        const q = encodeURIComponent(`(in:inbox OR in:spam) newer_than:${days}d -from:me`);
     const page = await gmailFetch(
       mailbox,
       `/messages?q=${q}&maxResults=100${pageToken ? `&pageToken=${pageToken}` : ''}`
