@@ -12,10 +12,11 @@ function escapeHtml(s) {
 
 // Placeholder text scrapers sometimes leave behind. Treated as empty.
 function clean(v) {
-  const t = String(v == null ? '' : v).trim();
+  // Drop a scraper's "FALLBACK - " / "[FALLBACK]" label, keep the text after it.
+  const t = String(v == null ? '' : v).replace(/^\s*(?:\[\s*fallback\s*\]|fallback\s*(?:[-:|\u2013\u2014]+|$))\s*/i, '').trim();
   if (!t) return '';
-  if (/^(none|n\/a|na|null|unknown|not found|nothing|fallback)\b/i.test(t)) return '';
-  return t.replace(/^fallback\s*-\s*/i, '');
+  if (/^(none|n\/a|na|null|unknown|not found|nothing)\b/i.test(t)) return '';
+  return t;
 }
 
 // ─── Tracks ──────────────────────────────────────────────────────────────────
