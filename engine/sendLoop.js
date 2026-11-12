@@ -184,6 +184,9 @@ async function processCandidate(id) {
 
 let running = false;
 async function runSendLoop() {
+    // Railway variable PAUSE_SENDING=true stops every scheduled email.
+  // Reply detection, AI replies and webhooks keep running.
+  if (process.env.PAUSE_SENDING === 'true') return;
   if (running) return;
   running = true;
   try {
