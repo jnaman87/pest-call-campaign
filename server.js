@@ -345,6 +345,64 @@ ${body}</body></html>`);
   }
 });
 
+// ─── Mailbox deliverability test ─────────────────────────────────────────────
+// Sends the real first email of a track to a list of seed addresses, from ONE
+// mailbox, back to back. Creates no leads, touches no daily limits, no GHL.
+//   Preview: /admin/deliverability-test?token=<AUDIT_TOKEN>&mailbox=x@y.com&track=A&code=XYZ&to=a@b.com,c@d.com
+//   Send:    the same URL + &send=yes
+const DELIVERABILITY_RUNS = new Set();
+app.get('/admin/deliverability-test', async (req, res) => {
+  if (!process.env.AUDIT_TOKEN || req.query.token !== process.env.AUDIT_TOKEN) {
+    return res.status(403).json({ error: 'Set AUDIT_TOKEN in Railway and pass ?token=<that value>' });
+  }
+  const render = require('./engine/render');
+  const { getPersona } = require('./engine/personas');
+  const { sendEmail } = require('./engine/gmail');
+
+  const mailbox = String(req.query.mailbox || '').trim().toLowerCase();
+  if (!CFG.mailboxes.some(m => m.email.toLowerCase() === mailbox)) {
+    return res.status(400).json({ error: 'mailbox must be one of the 18 in config.js' });
+  }
+  const track = String(req.query.track || 'A').trim().toUpperCase();
+  if (!require('./campaign').tracks[track]) return res.status(400).json({ error: 'track must be A, B or C' });
+
+  const to = [...new Set(String(req.query.to || '').split(/[\s,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean))];
+  const bad = to.filter(e => !/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(e));
+  if (!to.length || bad.length || to.length > 60) {
+    return res.status(400).json({ error: 'to: 1 to 60 comma-separated email addresses', invalid: bad });
+  }
+
+  const persona = getPersona(mailbox);
+  const lead = { track, company_name: String(req.query.company || '').trim() || null };
+  const email = render.renderStep(0, lead, persona, String(req.query.code || '').trim());
+
+  if (req.query.send !== 'yes') {
+    return res.json({ preview: true, note: 'Nothing sent. Add &send=yes to send.', from: `${persona.fullName} <${mailbox}>`,
+      track, subject: email.subject, recipients: to.length, to, html: email.html });
+  }
+
+  // A reload of the send link must not send the whole batch again.
+  const runKey = `${mailbox}|${email.subject}|${String(req.query.code || '')}`;
+  if (DELIVERABILITY_RUNS.has(runKey) && req.query.again !== 'yes') {
+    return res.status(409).json({ error: 'This test was already sent from this mailbox with this code. Add &again=yes to send it again.' });
+  }
+  DELIVERABILITY_RUNS.add(runKey);
+
+  const results = [];
+  for (const addr of to) {
+    try {
+      const r = await sendEmail({ mailbox, fromName: persona.fullName, to: addr, subject: email.subject, body: email.html });
+      results.push({ to: addr, ok: true, messageId: r.messageId });
+    } catch (e) {
+      results.push({ to: addr, ok: false, error: e.message });
+    }
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  const sent = results.filter(r => r.ok).length;
+  console.log(`[deliverability-test] ${sent}/${to.length} sent from ${mailbox} (track ${track})`);
+  res.json({ sent, failed: to.length - sent, from: `${persona.fullName} <${mailbox}>`, track, subject: email.subject, results });
+});
+
 // ─── Setup helper ────────────────────────────────────────────────────────────
 // GET /setup/ghl-ids?token=<SETUP_TOKEN>
 app.get('/setup/ghl-ids', async (req, res) => {
