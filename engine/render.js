@@ -126,12 +126,13 @@ function delayBeforeStep(enrollment, i) {
 }
 
 // Returns { subject, html } for the lead's current step, picking a random variant.
-function renderStep(i, enrollment, persona) {
+// extraLine (optional) is added as the last paragraph above the signature.
+function renderStep(i, enrollment, persona, extraLine) {
   const st = trackOf(enrollment).steps[i];
   if (!st || !Array.isArray(st.variants) || !st.variants.length) return null;
   const v = st.variants[Math.floor(Math.random() * st.variants.length)];
   const f = fields(enrollment, persona);
-  const body = fillDroppingEmptyLines(v.body, f);
+  const body = fillDroppingEmptyLines(v.body, f) + (extraLine ? '\n\n' + String(extraLine).trim() : '');
   const signature = fill(CAMPAIGN.signature, f);
   const html = toHtml(body + '\n\n' + signature) +
     '\n<p>---<br>' + escapeHtml(CAMPAIGN.unsubscribeLine) + '</p>';
