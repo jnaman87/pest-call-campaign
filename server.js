@@ -345,6 +345,20 @@ ${body}</body></html>`);
   }
 });
 
+// ─── Park leads caught in warmup ─────────────────────────────────────────────
+// GET /admin/park-warmup-leads?token=<AUDIT_TOKEN>            preview, changes nothing
+// GET /admin/park-warmup-leads?token=<AUDIT_TOKEN>&confirm=yes   parks them
+app.get('/admin/park-warmup-leads', async (req, res) => {
+  if (!process.env.AUDIT_TOKEN || req.query.token !== process.env.AUDIT_TOKEN) {
+    return res.status(403).json({ error: 'Set AUDIT_TOKEN in Railway and pass ?token=<that value>' });
+  }
+  try {
+    res.json(await require('./engine/parkLeads').parkLeads({ confirm: req.query.confirm === 'yes' }));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ─── Mailbox deliverability test ─────────────────────────────────────────────
 // Sends the real first email of a track to a list of seed addresses, from ONE
 // mailbox, back to back. Creates no leads, touches no daily limits, no GHL.
