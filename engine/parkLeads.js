@@ -6,8 +6,8 @@
  * follow-ups. Leads still waiting for email 1 stay queued as new leads.
  *
  *   status        -> 'parked' (the send loop never picks it up)
- *   GHL           -> tag pestcamp_caught_in_warmup, deal moved to the
- *                    "Caught in warmups (To be re-targeted later)" stage
+ *   GHL           -> deal moved to the "Caught in warmups (To be re-targeted later)"
+ *                    stage. No tags are added.
  *
  * Parked leads are still watched by the reply detector: if one replies to an
  * earlier email, it is handled like any other reply.
@@ -33,14 +33,13 @@ async function findStage() {
   return stage ? { id: stage.id, name: stage.name, pipeline: pipe.name } : null;
 }
 
-// Tags and moves every parked lead in GHL. Safe to run again.
+// Moves every parked lead's deal in GHL. Safe to run again.
 async function syncGhl(stage) {
   const { rows } = await pool.query(`SELECT * FROM enrollments WHERE status = 'parked' AND contact_id IS NOT NULL ORDER BY id`);
   Object.assign(progress, { running: true, total: rows.length, done: 0, moved: 0, noDeal: 0, errors: 0,
     startedAt: new Date().toISOString(), finishedAt: null });
   for (const e of rows) {
     try {
-      await crm.addTag(e.contact_id, 'caught_in_warmup');
       const oppId = await crm.ensureOpportunity(e);
       if (oppId) {
         const r = await crm.ghl('PUT', `/opportunities/${oppId}`, { pipelineStageId: stage.id });
@@ -84,7 +83,7 @@ async function parkLeads({ confirm }) {
     `UPDATE enrollments SET status = 'parked', next_send_at = NULL WHERE ${TO_PARK}`);
   console.log(`[park] ${rowCount} leads parked`);
   syncGhl(stage).catch(err => { progress.running = false; console.error('[park] GHL sync failed:', err.message); });
-  return { parkedNow: rowCount, note: 'Leads parked. GHL tags and stage moves are running in the background; reload this link without confirm to watch progress.', ...summary, alreadyParked: alreadyParked + rowCount };
+  return { parkedNow: rowCount, note: 'Leads parked. GHL stage moves are running in the background; reload this link without confirm to watch progress.', ...summary, alreadyParked: alreadyParked + rowCount };
 }
 
 module.exports = { parkLeads };
