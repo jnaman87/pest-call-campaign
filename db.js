@@ -88,15 +88,11 @@ async function init(attempt = 1) {
     );
   `);
 
-  // Only the mailboxes in config.js "mailboxes" send; retired ones are kept for replies.
+    // Only the mailboxes in config.js "mailboxes" are used. Retired ones were removed
+  // from Google Workspace, so they are dropped here.
   await pool.query(`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE`);
-  for (const m of CFG.retiredMailboxes || []) {
-    if (!m || !m.email) continue;
-    await pool.query(
-      `INSERT INTO mailboxes (email, active) VALUES ($1, FALSE) ON CONFLICT (email) DO UPDATE SET active = FALSE`,
-      [m.email.toLowerCase().trim()]
-    );
-  }
+  const current = (CFG.mailboxes || []).filter(m => m && m.email).map(m => m.email.toLowerCase().trim());
+  if (current.length) await pool.query(`DELETE FROM mailboxes WHERE email <> ALL($1::text[])`, [current]);
   for (const m of CFG.mailboxes || []) {
     if (!m || !m.email) continue;
     await pool.query(
