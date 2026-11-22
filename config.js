@@ -51,6 +51,29 @@ module.exports = {
 
   // ── Sending mailboxes (shared with the AI voice campaign) ─────────────────
   mailboxes: [
+    { email: 'anne@creativecopyz.net',     name: 'Anne Schull',    title: 'Director of Client Solutions' },
+    { email: 'brenda@creativecopyz.net',   name: 'Brenda Cooper',  title: 'Business Development Manager' },
+    { email: 'caitlyn@creativecopyz.net',  name: 'Caitlyn Smoke',  title: 'Account Executive' },
+    { email: 'chloe@cretivecopyz.com',     name: 'Chloe Mac',      title: 'Head of Business Development' },
+    { email: 'claire@cretivecopyz.com',    name: 'Claire Dunphy',  title: 'Partnership Manager' },
+    { email: 'gabby@cretivecopyz.com',     name: 'Gabby Ponting',  title: 'AI Solutions Director' },
+    { email: 'emily@ccopyz.net',           name: 'Emily Hathway',  title: 'Client Success Manager' },
+    { email: 'hailey@ccopyz.net',          name: 'Hailey Henz',    title: 'Account Manager' },
+    { email: 'jennifer@ccopyz.net',        name: 'Jennifer Speed', title: 'Business Development Lead' },
+    { email: 'helen@ccopyz.com',           name: 'Helen Morgan',   title: 'Director of Partnerships' },
+    { email: 'jane@ccopyz.com',            name: 'Jane Albus',     title: 'Director of Sales' },
+    { email: 'june@ccopyz.com',            name: 'June Walker',    title: 'Account Executive' },
+    { email: 'hope@ccopyz.org',            name: 'Hope Garrold',   title: 'Business Development Executive' },
+    { email: 'judy@ccopyz.org',            name: 'Judy Walkway',   title: 'Head of AI Outreach' },
+    { email: 'miranda@ccopyz.org',         name: 'Miranda Ten',    title: 'Senior Account Manager' },
+    { email: 'pepper@creativecopyz.org',   name: 'Pepper Jazz',    title: 'Partnership Director' },
+    { email: 'samantha@creativecopyz.org', name: 'Samantha Borne', title: 'AI Solutions Advisor' },
+    { email: 'vanessa@creativecopyz.org',  name: 'Vanessa Cruz',   title: 'Client Relations Manager' },
+  ],
+
+  // Mailboxes that no longer send. Still watched, so replies in their old
+  // threads are caught and answered as the same sender.
+  retiredMailboxes: [
     { email: 'anne@ccopyz.com',           name: 'Anne Schull',   title: 'Director of Client Solutions' },
     { email: 'billy@ccopyz.com',          name: 'Billy Cooper',  title: 'Business Development Manager' },
     { email: 'caitlyn@ccopyz.com',        name: 'Caitlyn Smoke', title: 'Account Executive' },
