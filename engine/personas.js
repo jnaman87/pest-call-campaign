@@ -5,7 +5,7 @@
 const CFG = require('../config');
 
 const BY_EMAIL = {};
-for (const m of CFG.mailboxes || []) {
+for (const m of [...(CFG.retiredMailboxes || []), ...(CFG.mailboxes || [])]) {
   if (m && m.email) BY_EMAIL[m.email.toLowerCase()] = { fullName: m.name, title: m.title };
 }
 
