@@ -88,10 +88,19 @@ async function init(attempt = 1) {
     );
   `);
 
+  // Only the mailboxes in config.js "mailboxes" send; retired ones are kept for replies.
+  await pool.query(`ALTER TABLE mailboxes ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE`);
+  for (const m of CFG.retiredMailboxes || []) {
+    if (!m || !m.email) continue;
+    await pool.query(
+      `INSERT INTO mailboxes (email, active) VALUES ($1, FALSE) ON CONFLICT (email) DO UPDATE SET active = FALSE`,
+      [m.email.toLowerCase().trim()]
+    );
+  }
   for (const m of CFG.mailboxes || []) {
     if (!m || !m.email) continue;
     await pool.query(
-      `INSERT INTO mailboxes (email) VALUES ($1) ON CONFLICT (email) DO NOTHING`,
+      `INSERT INTO mailboxes (email, active) VALUES ($1, TRUE) ON CONFLICT (email) DO UPDATE SET active = TRUE`,
       [m.email.toLowerCase().trim()]
     );
   }
