@@ -39,7 +39,7 @@ function inSendWindow(tz) {
 async function pickMailbox(client) {
   const { rows } = await client.query(
     `SELECT email FROM mailboxes
-      WHERE daily_reset_at < ${TODAY} OR daily_count < $1
+      WHERE active AND (daily_reset_at < ${TODAY} OR daily_count < $1)
       ORDER BY last_sent_at NULLS FIRST
       LIMIT 1
       FOR UPDATE SKIP LOCKED`,
